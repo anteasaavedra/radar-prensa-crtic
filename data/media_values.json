@@ -1,0 +1,170 @@
+{
+  "_comment": "Valores base estimados referenciales de exposición mediática en CLP. Editables según criterio comunicacional de CRTIC.",
+  "medios": {
+    "emol.com": {
+      "nombre": "Emol / El Mercurio",
+      "valor_base": 2500000,
+      "grupo": "El Mercurio"
+    },
+    "elmercurio.com": {
+      "nombre": "El Mercurio",
+      "valor_base": 2500000,
+      "grupo": "El Mercurio"
+    },
+    "latercera.com": {
+      "nombre": "La Tercera",
+      "valor_base": 2200000,
+      "grupo": "Copesa"
+    },
+    "culto.latercera.com": {
+      "nombre": "Culto / La Tercera",
+      "valor_base": 2200000,
+      "grupo": "Copesa"
+    },
+    "pulso.cl": {
+      "nombre": "Pulso",
+      "valor_base": 2200000,
+      "grupo": "Copesa"
+    },
+    "biobiochile.cl": {
+      "nombre": "BioBioChile",
+      "valor_base": 1800000,
+      "grupo": "Independiente"
+    },
+    "df.cl": {
+      "nombre": "Diario Financiero",
+      "valor_base": 1800000,
+      "grupo": "DF"
+    },
+    "cnncile.cl": {
+      "nombre": "CNN Chile",
+      "valor_base": 1500000,
+      "grupo": "Turner"
+    },
+    "cnnchile.com": {
+      "nombre": "CNN Chile",
+      "valor_base": 1500000,
+      "grupo": "Turner"
+    },
+    "elmostrador.cl": {
+      "nombre": "El Mostrador",
+      "valor_base": 1200000,
+      "grupo": "Independiente"
+    },
+    "cooperativa.cl": {
+      "nombre": "Cooperativa",
+      "valor_base": 1200000,
+      "grupo": "Cooperativa"
+    },
+    "adn.cl": {
+      "nombre": "Radio ADN",
+      "valor_base": 1000000,
+      "grupo": "Grupo Dial"
+    },
+    "paiscircular.cl": {
+      "nombre": "País Circular",
+      "valor_base": 900000,
+      "grupo": "Independiente"
+    },
+    "chocale.cl": {
+      "nombre": "Chócale",
+      "valor_base": 800000,
+      "grupo": "Independiente"
+    },
+    "soychile.cl": {
+      "nombre": "SoyChile",
+      "valor_base": 500000,
+      "grupo": "El Mercurio Regional"
+    },
+    "chilevision.cl": {
+      "nombre": "CHV Noticias",
+      "valor_base": 1800000,
+      "grupo": "Paramount"
+    },
+    "t13.cl": {
+      "nombre": "T13",
+      "valor_base": 1800000,
+      "grupo": "Canal 13"
+    },
+    "24horas.cl": {
+      "nombre": "24 Horas TVN",
+      "valor_base": 1600000,
+      "grupo": "TVN"
+    },
+    "meganoticias.cl": {
+      "nombre": "Meganoticias",
+      "valor_base": 1600000,
+      "grupo": "Megamedia"
+    },
+    "eldinamo.cl": {
+      "nombre": "El Dínamo",
+      "valor_base": 700000,
+      "grupo": "Independiente"
+    },
+    "ex-ante.cl": {
+      "nombre": "Ex-Ante",
+      "valor_base": 800000,
+      "grupo": "Independiente"
+    },
+    "interferencia.cl": {
+      "nombre": "Interferencia",
+      "valor_base": 600000,
+      "grupo": "Independiente"
+    },
+    "puranoticia.cl": {
+      "nombre": "Pura Noticia",
+      "valor_base": 400000,
+      "grupo": "Regional"
+    },
+    "corfo.cl": {
+      "nombre": "CORFO",
+      "valor_base": 300000,
+      "grupo": "Institucional"
+    },
+    "gam.cl": {
+      "nombre": "GAM",
+      "valor_base": 300000,
+      "grupo": "Institucional"
+    },
+    "default_universidad": {
+      "nombre": "Universidad / Institución académica",
+      "valor_base": 300000,
+      "grupo": "Académico"
+    },
+    "default_aliado": {
+      "nombre": "Aliado / Institución",
+      "valor_base": 300000,
+      "grupo": "Aliado"
+    },
+    "default_regional": {
+      "nombre": "Medio regional",
+      "valor_base": 500000,
+      "grupo": "Regional"
+    },
+    "default": {
+      "nombre": "Medio desconocido",
+      "valor_base": 200000,
+      "grupo": "Desconocido"
+    }
+  },
+  "factores_visibilidad": {
+    "titular": 1.2,
+    "nota_completa": 1.0,
+    "entrevista": 1.4,
+    "mencion_secundaria": 0.5,
+    "agenda": 0.3,
+    "institucional": 0.6
+  },
+  "factores_estrategicos": {
+    "ia_innovacion_internacionalizacion": 1.2,
+    "formacion_cursos": 1.0,
+    "alianzas_estrategicas": 1.1,
+    "evento_menor": 0.8,
+    "mencion_tangencial": 0.6
+  },
+  "dominios_universitarios": [
+    "uc.cl", "uchile.cl", "usach.cl", "uai.cl", "udp.cl", "udd.cl",
+    "uft.cl", "unab.cl", "uach.cl", "ufro.cl", "ucn.cl", "utalca.cl",
+    "umayor.cl", "uss.cl", "duoc.cl", "inacap.cl"
+  ]
+}

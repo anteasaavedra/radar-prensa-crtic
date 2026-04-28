@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar de Prensa CRTIC – {{ fecha }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6fb; color: #222; }
+  .wrapper { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a237e 0%, #283593 60%, #3949ab 100%);
+            color: #fff; border-radius: 14px; padding: 32px 36px; margin-bottom: 24px; }
+  .header h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.5px; }
+  .header .subtitle { font-size: 0.9rem; opacity: 0.8; margin-top: 4px; }
+  .header .fecha { font-size: 1rem; font-weight: 600; margin-top: 12px; opacity: 0.95; }
+
+  /* KPIs */
+  .kpis { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
+  .kpi { flex: 1; min-width: 160px; background: #fff; border-radius: 12px;
+         padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .kpi .label { font-size: 0.78rem; color: #666; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi .value { font-size: 1.6rem; font-weight: 700; color: #1a237e; margin-top: 4px; }
+  .kpi.alert .value { color: #c62828; }
+
+  /* Section */
+  .section { background: #fff; border-radius: 12px; padding: 22px 24px;
+             margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .section h2 { font-size: 1rem; font-weight: 700; color: #1a237e;
+                border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; margin-bottom: 16px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  th { background: #e8eaf6; color: #1a237e; font-weight: 700;
+       padding: 8px 10px; text-align: left; }
+  td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+  tr:hover td { background: #f9f9ff; }
+  a { color: #1565c0; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Tags */
+  .tag { display: inline-block; border-radius: 5px; padding: 2px 8px;
+         font-size: 0.75rem; font-weight: 600; }
+  .pos  { background: #c8e6c9; color: #1b5e20; }
+  .neg  { background: #ffcdd2; color: #b71c1c; }
+  .neu  { background: #e3f2fd; color: #0d47a1; }
+  .alt  { background: #fff3e0; color: #e65100; }
+  .med  { background: #f3e5f5; color: #6a1b9a; }
+  .baj  { background: #fafafa; color: #555; border: 1px solid #ddd; }
+
+  /* Top 3 */
+  .top-card { background: #f7f8ff; border: 1px solid #c5cae9;
+              border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+  .top-card .rank { font-size: 1.5rem; font-weight: 900; color: #c5cae9;
+                    float: right; line-height: 1; }
+  .top-card .medio { font-size: 0.78rem; color: #666; margin-bottom: 2px; }
+  .top-card .titulo a { font-weight: 600; color: #1a237e; font-size: 0.9rem; }
+  .top-card .vem { font-size: 0.82rem; color: #388e3c; font-weight: 700; margin-top: 6px; }
+
+  /* Alertas */
+  .alerta { background: #fff8e1; border-left: 4px solid #f9a825;
+            border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; font-size: 0.85rem; }
+  .alerta.error { background: #ffebee; border-color: #e53935; }
+
+  /* Recomendaciones */
+  .rec { background: #e8f5e9; border-left: 4px solid #43a047;
+         border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; font-size: 0.85rem; }
+
+  /* Footer */
+  .footer { text-align: center; font-size: 0.75rem; color: #999; margin-top: 28px; padding: 16px; }
+  .disclaimer { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+                padding: 12px 16px; margin-top: 20px; font-size: 0.78rem; color: #5d4037; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <div class="header">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:2rem;">📡</span>
+      <div>
+        <h1>Radar de Prensa CRTIC</h1>
+        <div class="subtitle">Centro para la Revolución Tecnológica en Industrias Creativas</div>
+      </div>
+    </div>
+    <div class="fecha">Reporte diario — {{ fecha }} &nbsp;·&nbsp; Generado {{ generado }}</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="label">Menciones nuevas</div>
+      <div class="value">{{ total_menciones }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">VEM estimado del día</div>
+      <div class="value">{{ vem_total }}</div>
+    </div>
+    <div class="kpi {% if negativas %}alert{% endif %}">
+      <div class="label">Menciones negativas</div>
+      <div class="value">{{ negativas | length }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Alta relevancia</div>
+      <div class="value">{{ altas | length }}</div>
+    </div>
+  </div>
+
+  {% if top3 %}
+  <!-- Top 3 -->
+  <div class="section">
+    <h2>🏆 Top 3 menciones por valorización</h2>
+    {% for m in top3 %}
+    <div class="top-card">
+      <span class="rank">#{{ loop.index }}</span>
+      <div class="medio">{{ m.medio }}</div>
+      <div class="titulo"><a href="{{ m.url }}" target="_blank">{{ m.titulo }}</a></div>
+      <div style="margin-top:6px;">
+        <span class="tag {{ 'pos' if m.sentimiento == 'Positivo' else ('neg' if m.sentimiento == 'Negativo' else 'neu') }}">
+          {{ m.sentimiento }}
+        </span>
+        &nbsp;
+        <span class="tag {{ 'alt' if m.relevancia == 'Alta' else ('med' if m.relevancia == 'Media' else 'baj') }}">
+          {{ m.relevancia }}
+        </span>
+        &nbsp;
+        <span class="tag neu">{{ m.tipo_mencion }}</span>
+      </div>
+      <div class="vem">VEM estimado: {{ format_clp(m.vem) }} CLP (ref.)</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Tabla completa -->
+  {% if menciones %}
+  <div class="section">
+    <h2>📋 Todas las menciones del día</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Medio</th>
+          <th>Título</th>
+          <th>Tipo</th>
+          <th>Sentimiento</th>
+          <th>Relevancia</th>
+          <th>Área CRTIC</th>
+          <th>VEM (ref.)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in menciones %}
+        <tr>
+          <td>{{ m.medio }}</td>
+          <td><a href="{{ m.url }}" target="_blank">{{ m.titulo[:80] }}{% if m.titulo|length > 80 %}…{% endif %}</a></td>
+          <td><span class="tag neu">{{ m.tipo_mencion }}</span></td>
+          <td>
+            <span class="tag {{ 'pos' if m.sentimiento == 'Positivo' else ('neg' if m.sentimiento == 'Negativo' else 'neu') }}">
+              {{ m.sentimiento }}
+            </span>
+          </td>
+          <td>
+            <span class="tag {{ 'alt' if m.relevancia == 'Alta' else ('med' if m.relevancia == 'Media' else 'baj') }}">
+              {{ m.relevancia }}
+            </span>
+          </td>
+          <td>{{ m.area_crtic }}</td>
+          <td style="font-weight:600; color:#388e3c;">{{ format_clp(m.vem) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="section">
+    <p style="color:#888; text-align:center; padding: 20px 0;">Sin menciones nuevas para el día {{ fecha }}.</p>
+  </div>
+  {% endif %}
+
+  <!-- Alertas -->
+  <div class="section">
+    <h2>⚠️ Alertas</h2>
+    {% if negativas %}
+      {% for m in negativas %}
+      <div class="alerta error">
+        <strong>Mención negativa:</strong> {{ m.medio }} —
+        <a href="{{ m.url }}" target="_blank">{{ m.titulo[:70] }}</a>
+      </div>
+      {% endfor %}
+    {% endif %}
+    {% if not negativas and not altas %}
+      <div class="alerta">Sin alertas críticas para el día {{ fecha }}.</div>
+    {% endif %}
+    {% if altas %}
+      {% for m in altas %}
+      <div class="alerta">
+        <strong>Alta relevancia:</strong> {{ m.medio }} —
+        <a href="{{ m.url }}" target="_blank">{{ m.titulo[:70] }}</a>
+        &nbsp;<span class="tag pos">{{ m.sentimiento }}</span>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Recomendaciones -->
+  <div class="section">
+    <h2>💡 Recomendaciones comunicacionales</h2>
+    {% for rec in recomendaciones %}
+    <div class="rec">{{ rec }}</div>
+    {% endfor %}
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <strong>Nota metodológica:</strong> Los valores de exposición mediática (VEM) son estimados referenciales
+    calculados a partir de valores base por medio, factores de visibilidad y factores estratégicos definidos
+    internamente por CRTIC. No representan tarifas comerciales ni valor publicitario oficial.
+    Este informe es de uso interno institucional.
+  </div>
+
+  <div class="footer">
+    Radar de Prensa CRTIC &nbsp;·&nbsp; Sistema interno de monitoreo mediático &nbsp;·&nbsp; {{ generado }}
+  </div>
+
+</div>
+</body>
+</html>

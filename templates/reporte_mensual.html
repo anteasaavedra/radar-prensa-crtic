@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar de Prensa CRTIC – Reporte {{ periodo }}</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#f4f6fb; color:#222; }
+  .wrapper { max-width:900px; margin:0 auto; padding:24px 16px; }
+
+  .header { background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff; border-radius:14px; padding:32px 36px; margin-bottom:24px; }
+  .header h1 { font-size:1.7rem; font-weight:700; }
+  .header .sub { font-size:.9rem; opacity:.8; margin-top:4px; }
+  .header .periodo { font-size:1.1rem; font-weight:600; margin-top:12px; }
+
+  .kpis { display:flex; gap:14px; margin-bottom:22px; flex-wrap:wrap; }
+  .kpi  { flex:1; min-width:150px; background:#fff; border-radius:12px;
+          padding:18px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  .kpi .label { font-size:.75rem; color:#888; text-transform:uppercase; letter-spacing:.5px; }
+  .kpi .value { font-size:1.5rem; font-weight:700; color:#1a237e; margin-top:4px; }
+  .kpi .delta { font-size:.8rem; margin-top:4px; }
+  .delta.up   { color:#2e7d32; } .delta.down { color:#c62828; }
+
+  .section { background:#fff; border-radius:12px; padding:22px 24px;
+             margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  .section h2 { font-size:1rem; font-weight:700; color:#1a237e;
+                border-bottom:2px solid #e8eaf6; padding-bottom:10px; margin-bottom:16px; }
+
+  table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  th { background:#e8eaf6; color:#1a237e; font-weight:700; padding:8px 10px; text-align:left; }
+  td { padding:8px 10px; border-bottom:1px solid #f0f0f0; vertical-align:top; }
+  tr:hover td { background:#f9f9ff; }
+  a { color:#1565c0; text-decoration:none; }
+
+  .tag { display:inline-block; border-radius:5px; padding:2px 8px;
+         font-size:.74rem; font-weight:600; }
+  .pos { background:#c8e6c9; color:#1b5e20; }
+  .neg { background:#ffcdd2; color:#b71c1c; }
+  .neu { background:#e3f2fd; color:#0d47a1; }
+  .alt { background:#fff3e0; color:#e65100; }
+  .med { background:#f3e5f5; color:#6a1b9a; }
+  .baj { background:#fafafa; color:#555; border:1px solid #ddd; }
+
+  /* Comparativo bar */
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .bar-label { width:130px; font-size:.8rem; white-space:nowrap; overflow:hidden;
+               text-overflow:ellipsis; color:#444; }
+  .bar-track { flex:1; background:#e8eaf6; border-radius:4px; height:14px; }
+  .bar-fill  { height:14px; border-radius:4px; background:#1a237e; transition:width .3s; }
+  .bar-val   { width:110px; font-size:.78rem; font-weight:600; color:#1a237e;
+               text-align:right; white-space:nowrap; }
+
+  /* Comparativo mensual timeline */
+  .timeline { display:flex; gap:8px; align-items:flex-end;
+              height:120px; margin-bottom:6px; }
+  .tbar     { flex:1; display:flex; flex-direction:column; align-items:center; }
+  .tbar-fill { width:100%; background:#3949ab; border-radius:4px 4px 0 0; }
+  .tbar-lbl { font-size:.7rem; color:#888; margin-top:4px; text-align:center; }
+  .tbar-val { font-size:.68rem; color:#1a237e; font-weight:600; }
+
+  .rec  { background:#e8f5e9; border-left:4px solid #43a047; border-radius:6px;
+          padding:10px 14px; margin-bottom:8px; font-size:.85rem; }
+  .alerta { background:#fff8e1; border-left:4px solid #f9a825; border-radius:6px;
+            padding:10px 14px; margin-bottom:8px; font-size:.85rem; }
+  .alerta.neg { background:#ffebee; border-color:#e53935; }
+
+  .disclaimer { background:#fff8e1; border:1px solid #ffe082; border-radius:8px;
+                padding:12px 16px; margin-top:20px; font-size:.78rem; color:#5d4037; }
+  .footer { text-align:center; font-size:.75rem; color:#999; margin-top:24px; padding:16px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:2rem;">📊</span>
+      <div>
+        <h1>Radar de Prensa CRTIC — Reporte Mensual</h1>
+        <div class="sub">Centro para la Revolución Tecnológica en Industrias Creativas</div>
+      </div>
+    </div>
+    <div class="periodo">{{ periodo }} &nbsp;·&nbsp; Generado el {{ generado }}</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="label">Total menciones</div>
+      <div class="value">{{ total_menciones }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">VEM mensual (ref.)</div>
+      <div class="value">{{ vem_total }}</div>
+      <div class="delta {{ 'up' if '▲' in variacion else 'down' }}">{{ variacion }} vs. mes anterior</div>
+    </div>
+    <div class="kpi">
+      <div class="label">VEM mes anterior</div>
+      <div class="value">{{ vem_anterior }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Menciones negativas</div>
+      <div class="value" style="{{ 'color:#c62828' if negativas|length > 0 else '' }}">
+        {{ negativas|length }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparativo mensual -->
+  {% if comparativo %}
+  <div class="section">
+    <h2>📈 Evolución VEM mensual</h2>
+    {% set vem_max = comparativo | map(attribute='vem_total') | map('float') | max %}
+    <div class="timeline">
+      {% for c in comparativo %}
+      {% set pct = (c.vem_total | float / vem_max * 100) | round | int if vem_max > 0 else 0 %}
+      <div class="tbar">
+        <div class="tbar-val">{{ "%.1f" | format(c.vem_total | float / 1000000) }}M</div>
+        <div class="tbar-fill" style="height:{{ pct }}%;"></div>
+        <div class="tbar-lbl">{{ c.mes }}/{{ c.anio[2:] }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <p style="font-size:.75rem;color:#888;text-align:right;">Valores en millones CLP (referenciales)</p>
+  </div>
+  {% endif %}
+
+  <!-- Top 5 menciones -->
+  {% if top5 %}
+  <div class="section">
+    <h2>🏆 Top 5 menciones del mes por VEM</h2>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Medio</th><th>Título</th><th>Tipo</th><th>Sentimiento</th><th>VEM (ref.)</th></tr>
+      </thead>
+      <tbody>
+        {% for m in top5 %}
+        <tr>
+          <td style="font-weight:700;color:#c5cae9;">{{ loop.index }}</td>
+          <td>{{ m.medio }}</td>
+          <td><a href="{{ m.url }}" target="_blank">{{ m.titulo[:70] }}{% if m.titulo|length > 70 %}…{% endif %}</a></td>
+          <td><span class="tag neu">{{ m.tipo_mencion }}</span></td>
+          <td>
+            <span class="tag {{ 'pos' if m.sentimiento=='Positivo' else ('neg' if m.sentimiento=='Negativo' else 'neu') }}">
+              {{ m.sentimiento }}
+            </span>
+          </td>
+          <td style="font-weight:600;color:#388e3c;">{{ format_clp(m.vem) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Stats por medio -->
+  {% if stats_medio %}
+  <div class="section">
+    <h2>📰 VEM por medio (top 10)</h2>
+    {% set vem_max_m = stats_medio | map(attribute='vem_total') | map('float') | max %}
+    {% for s in stats_medio %}
+    {% set pct = (s.vem_total | float / vem_max_m * 100) | round | int if vem_max_m > 0 else 0 %}
+    <div class="bar-row">
+      <div class="bar-label" title="{{ s.medio }}">{{ s.medio or 'Desconocido' }}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%;"></div></div>
+      <div class="bar-val">{{ format_clp(s.vem_total) }} ({{ s.total }})</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Stats por área y tipo -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+
+    {% if stats_area %}
+    <div class="section" style="flex:1;min-width:280px;">
+      <h2>🏷️ Menciones por área CRTIC</h2>
+      {% set max_a = stats_area | map(attribute='total') | map('int') | max %}
+      {% for s in stats_area %}
+      {% set pct = (s.total | int / max_a * 100) | round | int if max_a > 0 else 0 %}
+      <div class="bar-row">
+        <div class="bar-label" title="{{ s.area_crtic }}">{{ s.area_crtic }}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%;background:#3949ab;"></div></div>
+        <div class="bar-val" style="color:#3949ab;">{{ s.total }} menciones</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if stats_tipo %}
+    <div class="section" style="flex:1;min-width:280px;">
+      <h2>📋 Menciones por tipo</h2>
+      {% set max_t = stats_tipo | map(attribute='total') | map('int') | max %}
+      {% for s in stats_tipo %}
+      {% set pct = (s.total | int / max_t * 100) | round | int if max_t > 0 else 0 %}
+      <div class="bar-row">
+        <div class="bar-label" title="{{ s.tipo_mencion }}">{{ s.tipo_mencion }}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%;background:#00695c;"></div></div>
+        <div class="bar-val" style="color:#00695c;">{{ s.total }} menciones</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Sentimiento -->
+  {% if stats_sent %}
+  <div class="section">
+    <h2>💬 Distribución de sentimiento</h2>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      {% for s in stats_sent %}
+      <div style="flex:1;min-width:120px;text-align:center;padding:16px;
+                  background:{{ '#c8e6c9' if s.sentimiento=='Positivo' else ('#ffcdd2' if s.sentimiento=='Negativo' else '#e3f2fd') }};
+                  border-radius:10px;">
+        <div style="font-size:1.6rem;font-weight:700;
+                    color:{{ '#1b5e20' if s.sentimiento=='Positivo' else ('#b71c1c' if s.sentimiento=='Negativo' else '#0d47a1') }};">
+          {{ s.total }}
+        </div>
+        <div style="font-size:.8rem;margin-top:4px;font-weight:600;">{{ s.sentimiento }}</div>
+        <div style="font-size:.75rem;color:#666;">{{ format_clp(s.vem_total) }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Menciones negativas -->
+  {% if negativas %}
+  <div class="section">
+    <h2>⚠️ Menciones negativas del mes</h2>
+    {% for m in negativas %}
+    <div class="alerta neg">
+      <strong>{{ m.medio }}</strong> —
+      <a href="{{ m.url }}" target="_blank">{{ m.titulo[:80] }}</a>
+      &nbsp;<span class="tag neg">Negativo</span>
+      &nbsp;<span class="tag {{ 'alt' if m.relevancia=='Alta' else ('med' if m.relevancia=='Media' else 'baj') }}">
+        {{ m.relevancia }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Recomendaciones -->
+  <div class="section">
+    <h2>💡 Recomendaciones comunicacionales del mes</h2>
+    {% for rec in recomendaciones %}
+    <div class="rec">{{ rec }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="disclaimer">
+    <strong>Nota metodológica:</strong> Los valores de exposición mediática (VEM) son estimados referenciales
+    calculados a partir de valores base por medio, factores de visibilidad y factores estratégicos definidos
+    internamente por CRTIC. No representan tarifas comerciales ni valor publicitario oficial.
+    Este informe es de uso interno institucional.
+  </div>
+
+  <div class="footer">
+    Radar de Prensa CRTIC &nbsp;·&nbsp; Reporte mensual {{ periodo }} &nbsp;·&nbsp; {{ generado }}
+  </div>
+
+</div>
+</body>
+</html>

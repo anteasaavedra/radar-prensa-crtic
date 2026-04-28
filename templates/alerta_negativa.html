@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>⚠️ Alerta CRTIC – Mención negativa</title>
+<style>
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#fff8f8; margin:0; padding:0; }
+  .wrapper { max-width:620px; margin:30px auto; background:#fff; border-radius:14px;
+             overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.1); }
+  .header  { background:linear-gradient(135deg,#b71c1c,#e53935); color:#fff;
+             padding:28px 32px; }
+  .header h1 { font-size:1.3rem; font-weight:700; margin:0 0 4px; }
+  .header p  { margin:0; font-size:.9rem; opacity:.9; }
+  .body    { padding:28px 32px; }
+  .dato    { margin-bottom:14px; }
+  .label   { font-size:.75rem; text-transform:uppercase; color:#888; letter-spacing:.5px; }
+  .value   { font-size:.95rem; color:#222; font-weight:600; margin-top:2px; }
+  .snippet { background:#fff3f3; border-left:4px solid #e53935; padding:12px 16px;
+             border-radius:6px; font-size:.88rem; color:#444; margin:18px 0; }
+  .btn     { display:inline-block; background:#1a237e; color:#fff; padding:10px 22px;
+             border-radius:8px; text-decoration:none; font-weight:600; font-size:.9rem;
+             margin-top:10px; }
+  .vem     { background:#fff3e0; border-radius:8px; padding:12px 16px; text-align:center;
+             margin-top:18px; }
+  .vem .v  { font-size:1.4rem; font-weight:700; color:#e65100; }
+  .footer  { text-align:center; padding:16px; font-size:.75rem; color:#aaa;
+             border-top:1px solid #f0f0f0; }
+  .disclaimer { font-size:.73rem; color:#aaa; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>⚠️ Alerta: mención negativa detectada</h1>
+    <p>Radar de Prensa CRTIC — acción comunicacional recomendada</p>
+  </div>
+  <div class="body">
+    <div class="dato">
+      <div class="label">Medio</div>
+      <div class="value">{{ mencion.medio or "Desconocido" }}</div>
+    </div>
+    <div class="dato">
+      <div class="label">Título</div>
+      <div class="value">{{ mencion.titulo }}</div>
+    </div>
+    <div class="dato">
+      <div class="label">Fecha de detección</div>
+      <div class="value">{{ mencion.fecha_deteccion }}</div>
+    </div>
+    <div class="dato">
+      <div class="label">Keyword que activó la alerta</div>
+      <div class="value">{{ mencion.keyword }}</div>
+    </div>
+    <div class="dato">
+      <div class="label">Área CRTIC asociada</div>
+      <div class="value">{{ mencion.area_crtic }}</div>
+    </div>
+
+    {% if mencion.snippet %}
+    <div class="snippet">{{ mencion.snippet }}</div>
+    {% endif %}
+
+    <a href="{{ mencion.url }}" class="btn" target="_blank">🔗 Ver nota completa</a>
+
+    <div class="vem">
+      <div class="label">VEM estimado referencial</div>
+      <div class="v">$ {{ "{:,}".format(mencion.vem | int).replace(",", ".") }} CLP</div>
+      <div class="disclaimer">Valor referencial interno — no equivale a tarifa publicitaria</div>
+    </div>
+
+    <div style="margin-top:24px; background:#e8eaf6; border-radius:8px; padding:14px 18px;">
+      <strong style="color:#1a237e;">💡 Acciones recomendadas</strong>
+      <ul style="margin:8px 0 0; padding-left:20px; font-size:.88rem; color:#444;">
+        <li>Revisar el contenido completo de la nota antes de responder.</li>
+        <li>Evaluar si amerita respuesta pública, aclaración o contacto directo con el medio.</li>
+        <li>Coordinar con el área involucrada: <strong>{{ mencion.area_crtic }}</strong>.</li>
+        <li>Registrar la mención como "revisada" en el dashboard una vez gestionada.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer">
+    Radar de Prensa CRTIC &nbsp;·&nbsp; Alerta automática generada al momento de la detección
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+name: Radar de Prensa CRTIC – Ejecución diaria
+
+on:
+  schedule:
+    # 08:00 AM hora de Santiago (UTC-3 en horario de verano → 11:00 UTC)
+    - cron: "0 11 * * *"
+  workflow_dispatch:   # permite ejecución manual desde GitHub
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar búsqueda diaria
+        env:
+          SEARCH_API_KEY:    ${{ secrets.SEARCH_API_KEY }}
+          SEARCH_API_PROVIDER: ${{ secrets.SEARCH_API_PROVIDER }}
+          GOOGLE_PSE_CX:     ${{ secrets.GOOGLE_PSE_CX }}
+          SMTP_HOST:         ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:         ${{ secrets.SMTP_PORT }}
+          SMTP_USER:         ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:     ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_FROM:        ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO:          ${{ secrets.EMAIL_TO }}
+          TIMEZONE:          America/Santiago
+        run: python -m app.main run-daily
+
+      - name: Subir reporte HTML como artefacto
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-${{ github.run_id }}
+          path: exports/reporte_*.html
+          retention-days: 30
