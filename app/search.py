@@ -1,6 +1,8 @@
+import json
 import logging
 import time
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import urlparse
 import requests
 from app.config import (
@@ -10,6 +12,25 @@ from app.config import (
     KEYWORDS,
     TIMEZONE,
 )
+
+_CONFIG_PATH = Path(__file__).resolve().parent.parent / "data" / "search_config.json"
+
+
+def load_active_keywords() -> list:
+    """Carga keywords activos desde search_config.json; si no existe, usa KEYWORDS de config.py."""
+    try:
+        with open(_CONFIG_PATH, encoding="utf-8") as f:
+            cfg = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return list(KEYWORDS)
+
+    disabled = set(cfg.get("disabled", []))
+    all_kw = (
+        cfg.get("keywords_primary", [])
+        + cfg.get("keywords_secondary", [])
+        + cfg.get("people", [])
+    )
+    return [kw for kw in all_kw if kw not in disabled]
 
 logger = logging.getLogger("radar_prensa.search")
 
@@ -168,11 +189,11 @@ def search_keyword(keyword: str) -> list[dict]:
 
 
 def run_daily_search() -> list[dict]:
-    """Ejecuta búsqueda para todos los keywords. Retorna lista de resultados sin deduplicar."""
+    """Ejecuta búsqueda para todos los keywords activos. Retorna lista de resultados sin deduplicar."""
     all_results: list[dict] = []
     seen_urls: set[str] = set()
 
-    for kw in KEYWORDS:
+    for kw in load_active_keywords():
         logger.info("Buscando: %s", kw)
         results = search_keyword(kw)
         for r in results:

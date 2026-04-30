@@ -1,0 +1,51 @@
+{
+  "keywords_primary": [
+    "CRTIC",
+    "Centro para la Revolución Tecnológica en Industrias Creativas",
+    "tecnocreatividad",
+    "tecnocreativo",
+    "CRTIC Sur",
+    "LAB CRTIC",
+    "CRTIC Lab"
+  ],
+  "keywords_secondary": [
+    "ChileCreativo CRTIC",
+    "CORFO CRTIC",
+    "Unreal Engine CRTIC",
+    "Meta AI CRTIC",
+    "CAF CRTIC",
+    "BID CRTIC",
+    "COPEC CRTIC",
+    "GAM CRTIC",
+    "ETM Day CRTIC"
+  ],
+  "people": [
+    "Marcela Piña CRTIC",
+    "Isidora Cabezón CRTIC",
+    "Pablo Christiny CRTIC",
+    "Pamela Chovan CRTIC"
+  ],
+  "partners": [
+    "ChileCreativo",
+    "CORFO",
+    "CAF",
+    "Meta AI",
+    "BID",
+    "COPEC",
+    "GAM",
+    "Universidad San Sebastián",
+    "Municipalidad de Pucón"
+  ],
+  "exclude_terms": [],
+  "priority_media": [
+    "latercera.com",
+    "emol.com",
+    "df.cl",
+    "biobiochile.cl",
+    "elmostrador.cl",
+    "cooperativa.cl",
+    "cnnchile.com"
+  ],
+  "search_frequency": "daily",
+  "disabled": []
+}

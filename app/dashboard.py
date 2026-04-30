@@ -44,7 +44,6 @@ hoy = datetime.now().date()
 fecha_desde = st.sidebar.date_input("Desde", value=hoy - timedelta(days=30))
 fecha_hasta = st.sidebar.date_input("Hasta", value=hoy)
 
-filtro_sent = st.sidebar.selectbox("Sentimiento", ["Todos","Positivo","Neutro","Negativo"])
 filtro_rel  = st.sidebar.selectbox("Relevancia",  ["Todos","Alta","Media","Baja"])
 filtro_area = st.sidebar.selectbox("Área CRTIC",  [
     "Todos","Formación","Comunicaciones","Proyectos / Emprendimiento",
@@ -111,7 +110,6 @@ st.sidebar.caption("Ejecuta la búsqueda con los 18 keywords y actualiza el dash
 menciones = get_menciones(
     fecha_desde=str(fecha_desde),
     fecha_hasta=str(fecha_hasta),
-    sentimiento=None if filtro_sent == "Todos" else filtro_sent,
     relevancia=None  if filtro_rel  == "Todos" else filtro_rel,
     area_crtic=None  if filtro_area == "Todos" else filtro_area,
     estado=None      if filtro_est  == "Todos" else filtro_est,
@@ -127,30 +125,24 @@ st.title("📡 Radar de Prensa CRTIC")
 st.caption("Monitoreo de menciones mediáticas — valores referenciales de exposición mediática (VEM)")
 
 # ── KPIs ───────────────────────────────────────────────────────────────────────
-k1, k2, k3, k4, k5 = st.columns(5)
-vem_sum  = int(df["vem"].sum()) if not df.empty else 0
-neg_n    = int((df["sentimiento"] == "Negativo").sum()) if not df.empty else 0
-alta_n   = int((df["relevancia"]  == "Alta").sum())     if not df.empty else 0
-pos_n    = int((df["sentimiento"] == "Positivo").sum()) if not df.empty else 0
+k1, k2, k3 = st.columns(3)
+vem_sum = int(df["vem"].sum()) if not df.empty else 0
+alta_n  = int((df["relevancia"] == "Alta").sum()) if not df.empty else 0
 
-k1.metric("Total menciones",   len(df))
-k2.metric("VEM acumulado",     f"$ {vem_sum:,}".replace(",", "."))
-k3.metric("Alta relevancia",   alta_n)
-k4.metric("Positivas",         pos_n)
-k5.metric("⚠️ Negativas",      neg_n, delta=None)
-
-if neg_n:
-    st.error(f"⚠️ {neg_n} mención(es) negativa(s) en el período seleccionado. Revisar en la pestaña 'Tabla'.")
+k1.metric("Total menciones", len(df))
+k2.metric("VEM acumulado",   f"$ {vem_sum:,}".replace(",", "."))
+k3.metric("Alta relevancia", alta_n)
 
 st.divider()
 
 # ── Pestañas ───────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 Visualizaciones",
     "📈 Comparativo VEM",
     "📋 Tabla de menciones",
     "✏️ Corrección manual",
     "📥 Exportar",
+    "⚙️ Configuración de búsquedas",
 ])
 
 # ════════════════════════════════════════════════════════════════
@@ -173,12 +165,12 @@ with tab1:
             st.plotly_chart(fig, use_container_width=True)
 
         with c2:
-            st.subheader("Menciones por sentimiento")
-            sent = df["sentimiento"].value_counts().reset_index()
-            sent.columns = ["Sentimiento","n"]
-            fig2 = px.pie(sent, values="n", names="Sentimiento",
-                          color="Sentimiento",
-                          color_discrete_map={"Positivo":"#4caf50","Neutro":"#2196f3","Negativo":"#f44336"})
+            st.subheader("Menciones por relevancia")
+            rel = df["relevancia"].value_counts().reset_index()
+            rel.columns = ["Relevancia","n"]
+            fig2 = px.pie(rel, values="n", names="Relevancia",
+                          color="Relevancia",
+                          color_discrete_map={"Alta":"#1a237e","Media":"#42a5f5","Baja":"#b0bec5"})
             fig2.update_layout(margin=dict(t=10,b=10))
             st.plotly_chart(fig2, use_container_width=True)
 
@@ -476,3 +468,206 @@ with tab5:
         if st.button("Exportar histórico"):
             p = export_historico(fmt_h)
             st.success(f"Guardado: {p}")
+
+
+# ════════════════════════════════════════════════════════════════
+# TAB 6 — Configuración de búsquedas (admin)
+# ════════════════════════════════════════════════════════════════
+import json as _json
+
+_SEARCH_CFG_PATH = Path(__file__).resolve().parent.parent / "data" / "search_config.json"
+
+_CAT_LABELS = {
+    "keywords_primary":   "🎯 Keywords principales",
+    "keywords_secondary": "🔗 Keywords secundarias",
+    "people":             "👤 Personas",
+    "partners":           "🤝 Aliados / Partners",
+    "exclude_terms":      "🚫 Términos excluidos",
+    "priority_media":     "📰 Medios prioritarios",
+}
+
+_CAT_HELP = {
+    "keywords_primary":   "Términos que siempre se buscan. Se usan en todas las búsquedas.",
+    "keywords_secondary": "Términos combinados con socios. Se usan en todas las búsquedas.",
+    "people":             "Nombres de personas vinculadas a CRTIC. Se usan en todas las búsquedas.",
+    "partners":           "Socios y aliados (referencial, no se buscan directamente).",
+    "exclude_terms":      "Términos que filtran resultados irrelevantes.",
+    "priority_media":     "Dominios de medios prioritarios para alertas.",
+}
+
+
+def _load_search_cfg() -> dict:
+    try:
+        with open(_SEARCH_CFG_PATH, encoding="utf-8") as f:
+            return _json.load(f)
+    except Exception:
+        return {
+            "keywords_primary": [], "keywords_secondary": [],
+            "people": [], "partners": [],
+            "exclude_terms": [], "priority_media": [],
+            "search_frequency": "daily", "disabled": [],
+        }
+
+
+def _save_search_cfg(cfg: dict) -> None:
+    with open(_SEARCH_CFG_PATH, "w", encoding="utf-8") as f:
+        _json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+
+with tab6:
+    st.subheader("⚙️ Configuración de búsquedas")
+
+    if "admin_ok" not in st.session_state:
+        st.session_state["admin_ok"] = False
+
+    if not st.session_state["admin_ok"]:
+        st.info("Esta sección es solo para administradores. Ingresa la contraseña para continuar.")
+        col_pw, col_btn = st.columns([3, 1])
+        with col_pw:
+            pw_input = st.text_input("Contraseña de administración", type="password", key="admin_pw_input")
+        with col_btn:
+            st.write(""); st.write("")
+            login_btn = st.button("Ingresar", key="admin_login")
+        if login_btn:
+            from app.config import _get as _cfg_get
+            admin_pw = _cfg_get("ADMIN_PASSWORD", "")
+            if admin_pw and pw_input == admin_pw:
+                st.session_state["admin_ok"] = True
+                st.rerun()
+            elif not admin_pw:
+                st.error("ADMIN_PASSWORD no configurado en .env o Secrets.")
+            else:
+                st.error("Contraseña incorrecta.")
+    else:
+        # ── Carga configuración ──────────────────────────────────────────────────
+        cfg = _load_search_cfg()
+        disabled: set = set(cfg.get("disabled", []))
+
+        # ── Selector de categoría ────────────────────────────────────────────────
+        cat_key = st.selectbox(
+            "Seleccionar categoría",
+            list(_CAT_LABELS.keys()),
+            format_func=lambda k: _CAT_LABELS[k],
+            key="admin_cat",
+        )
+        st.caption(_CAT_HELP.get(cat_key, ""))
+
+        items: list = cfg.get(cat_key, [])
+        is_search_cat = cat_key in ("keywords_primary", "keywords_secondary", "people")
+
+        # ── Lista de términos ────────────────────────────────────────────────────
+        st.markdown(f"**{_CAT_LABELS[cat_key]}** — {len(items)} término(s)")
+
+        _toggle_item = None
+        _delete_item = None
+
+        if items:
+            for i, term in enumerate(items):
+                is_active = term not in disabled
+                col_term, col_tog, col_del = st.columns([6, 1, 1])
+                with col_term:
+                    style = "" if is_active else "color:#aaa; text-decoration:line-through;"
+                    st.markdown(f'<span style="{style}">{term}</span>', unsafe_allow_html=True)
+                if is_search_cat:
+                    with col_tog:
+                        tog_label = "✅" if is_active else "⬜"
+                        if st.button(tog_label, key=f"tog_{cat_key}_{i}", help="Activar/Desactivar"):
+                            _toggle_item = term
+                with col_del:
+                    if st.button("🗑️", key=f"del_{cat_key}_{i}", help="Eliminar"):
+                        _delete_item = term
+        else:
+            st.caption("(Sin términos en esta categoría)")
+
+        # ── Agregar nuevo término ────────────────────────────────────────────────
+        st.divider()
+        col_new, col_add = st.columns([5, 1])
+        with col_new:
+            new_term = st.text_input("Nuevo término", placeholder="Escribe y haz clic en Agregar", key=f"new_{cat_key}")
+        with col_add:
+            st.write(""); st.write("")
+            add_btn = st.button("➕ Agregar", key=f"add_btn_{cat_key}")
+
+        # ── Acciones ─────────────────────────────────────────────────────────────
+        if _toggle_item is not None:
+            if _toggle_item in disabled:
+                disabled.discard(_toggle_item)
+            else:
+                disabled.add(_toggle_item)
+            cfg["disabled"] = list(disabled)
+            _save_search_cfg(cfg)
+            st.rerun()
+
+        if _delete_item is not None:
+            cfg[cat_key] = [x for x in cfg.get(cat_key, []) if x != _delete_item]
+            disabled.discard(_delete_item)
+            cfg["disabled"] = list(disabled)
+            _save_search_cfg(cfg)
+            st.success(f"'{_delete_item}' eliminado.")
+            st.rerun()
+
+        if add_btn:
+            term_clean = new_term.strip()
+            if not term_clean:
+                st.warning("El término no puede estar vacío.")
+            elif term_clean in cfg.get(cat_key, []):
+                st.warning(f"'{term_clean}' ya existe en esta categoría.")
+            else:
+                cfg.setdefault(cat_key, []).append(term_clean)
+                cfg["disabled"] = list(disabled)
+                _save_search_cfg(cfg)
+                st.success(f"✅ '{term_clean}' agregado.")
+                st.rerun()
+
+        # ── Frecuencia de búsqueda ────────────────────────────────────────────────
+        st.divider()
+        st.subheader("Frecuencia de búsqueda automática")
+        freq_opts = ["daily", "weekly"]
+        cur_freq = cfg.get("search_frequency", "daily")
+        freq_sel = st.selectbox(
+            "Frecuencia",
+            freq_opts,
+            index=freq_opts.index(cur_freq) if cur_freq in freq_opts else 0,
+            key="freq_sel",
+        )
+        if st.button("Guardar frecuencia"):
+            cfg["search_frequency"] = freq_sel
+            cfg["disabled"] = list(disabled)
+            _save_search_cfg(cfg)
+            st.success(f"✅ Frecuencia actualizada a '{freq_sel}'.")
+
+        # ── Restaurar defaults + cerrar sesión ───────────────────────────────────
+        st.divider()
+        col_restore, col_logout = st.columns(2)
+
+        with col_restore:
+            if st.button("↩️ Restaurar keywords por defecto"):
+                default_cfg = {
+                    "keywords_primary": [
+                        "CRTIC",
+                        "Centro para la Revolución Tecnológica en Industrias Creativas",
+                        "tecnocreatividad", "tecnocreativo", "CRTIC Sur", "LAB CRTIC", "CRTIC Lab",
+                    ],
+                    "keywords_secondary": [
+                        "ChileCreativo CRTIC", "CORFO CRTIC", "Unreal Engine CRTIC",
+                        "Meta AI CRTIC", "CAF CRTIC", "BID CRTIC", "COPEC CRTIC",
+                        "GAM CRTIC", "ETM Day CRTIC",
+                    ],
+                    "people": [
+                        "Marcela Piña CRTIC", "Isidora Cabezón CRTIC",
+                        "Pablo Christiny CRTIC", "Pamela Chovan CRTIC",
+                    ],
+                    "partners": cfg.get("partners", []),
+                    "exclude_terms": cfg.get("exclude_terms", []),
+                    "priority_media": cfg.get("priority_media", []),
+                    "search_frequency": cfg.get("search_frequency", "daily"),
+                    "disabled": [],
+                }
+                _save_search_cfg(default_cfg)
+                st.success("✅ Keywords restaurados a los valores por defecto.")
+                st.rerun()
+
+        with col_logout:
+            if st.button("🔒 Cerrar sesión admin"):
+                st.session_state["admin_ok"] = False
+                st.rerun()

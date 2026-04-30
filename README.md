@@ -53,10 +53,15 @@ EMAIL_FROM=tu@correo.cl
 EMAIL_TO=destinatario@crtic.cl
 
 TIMEZONE=America/Santiago
+
+# Contraseña para el panel de administración de keywords
+ADMIN_PASSWORD=tu_contraseña_admin
 ```
 
 > `SMTP_PASSWORD` debe ser una **contraseña de aplicación** de Google, no la contraseña de la cuenta.  
 > Generarla en: [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+
+> `ADMIN_PASSWORD` protege la pestaña "⚙️ Configuración de búsquedas" del dashboard. Sin este valor configurado, la sección no permite acceso.
 
 ---
 
@@ -123,6 +128,8 @@ EMAIL_FROM    = "tu@correo.cl"
 EMAIL_TO      = "destinatario@crtic.cl"
 
 TIMEZONE = "America/Santiago"
+
+ADMIN_PASSWORD = "tu_contraseña_admin"
 ```
 
 > El sistema detecta automáticamente si está en Streamlit Cloud y usa `st.secrets`; en local usa `.env`.
@@ -196,6 +203,29 @@ radar-prensa-crtic/
 pip install pytest
 pytest tests/ -v
 ```
+
+---
+
+## Configuración de keywords — `data/search_config.json`
+
+Los keywords de búsqueda se administran desde la pestaña **⚙️ Configuración de búsquedas** del dashboard (requiere `ADMIN_PASSWORD`). Los cambios se guardan en `data/search_config.json`.
+
+| Categoría | Descripción | Se busca |
+|---|---|---|
+| `keywords_primary` | Términos principales de CRTIC | ✅ Sí |
+| `keywords_secondary` | Términos combinados con socios | ✅ Sí |
+| `people` | Nombres de personas vinculadas a CRTIC | ✅ Sí |
+| `partners` | Socios y aliados (referencial) | ❌ No |
+| `exclude_terms` | Términos para filtrar resultados irrelevantes | — |
+| `priority_media` | Dominios de medios prioritarios para alertas | — |
+
+Cada keyword puede activarse o desactivarse sin eliminarlo. Los desactivados se guardan en el campo `disabled` del JSON.
+
+---
+
+## Notas sobre clasificación
+
+El campo **sentimiento** (Positivo / Neutro / Negativo) sigue calculándose automáticamente en el backend y está disponible en la pestaña **✏️ Corrección manual** para ajuste individual. No se muestra como filtro ni KPI en el dashboard principal para evitar sobreinterpretar el análisis automático.
 
 ---
 
