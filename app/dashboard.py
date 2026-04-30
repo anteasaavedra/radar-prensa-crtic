@@ -136,7 +136,7 @@ k3.metric("Alta relevancia", alta_n)
 st.divider()
 
 # ── Pestañas ───────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📊 Visualizaciones",
     "📈 Comparativo VEM",
     "📋 Tabla de menciones",
@@ -144,6 +144,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📥 Exportar",
     "⚙️ Configuración de búsquedas",
     "📧 Reportes por correo",
+    "🔐 Administración de acceso",
 ])
 
 # ════════════════════════════════════════════════════════════════
@@ -530,13 +531,10 @@ with tab6:
             st.write(""); st.write("")
             login_btn = st.button("Ingresar", key="admin_login")
         if login_btn:
-            from app.config import _get as _cfg_get
-            admin_pw = _cfg_get("ADMIN_PASSWORD", "")
-            if admin_pw and pw_input == admin_pw:
+            from app.auth import verify_password as _vp
+            if _vp(pw_input):
                 st.session_state["admin_ok"] = True
                 st.rerun()
-            elif not admin_pw:
-                st.error("ADMIN_PASSWORD no configurado en .env o Secrets.")
             else:
                 st.error("Contraseña incorrecta.")
     else:
@@ -694,13 +692,10 @@ with tab7:
         with col_btn7:
             st.write(""); st.write("")
             if st.button("Ingresar", key="admin_login7"):
-                from app.config import _get as _cfg_get7
-                admin_pw7 = _cfg_get7("ADMIN_PASSWORD", "")
-                if admin_pw7 and pw7 == admin_pw7:
+                from app.auth import verify_password as _vp7
+                if _vp7(pw7):
                     st.session_state["admin_ok"] = True
                     st.rerun()
-                elif not admin_pw7:
-                    st.error("ADMIN_PASSWORD no configurado en .env o Secrets.")
                 else:
                     st.error("Contraseña incorrecta.")
     else:
@@ -828,3 +823,91 @@ with tab7:
                 save_email_cfg(_EMAIL_DEFAULTS.copy())
                 st.success("✅ Configuración restaurada a valores por defecto.")
                 st.rerun()
+
+
+# ════════════════════════════════════════════════════════════════
+# TAB 8 — Administración de acceso
+# ════════════════════════════════════════════════════════════════
+with tab8:
+    st.subheader("🔐 Administración de acceso")
+
+    if not st.session_state.get("admin_ok", False):
+        st.info("Esta sección es solo para administradores. Autentícate en la pestaña '⚙️ Configuración de búsquedas'.")
+        col_pw8, col_btn8 = st.columns([3, 1])
+        with col_pw8:
+            pw8 = st.text_input("Contraseña de administración", type="password", key="admin_pw8")
+        with col_btn8:
+            st.write(""); st.write("")
+            if st.button("Ingresar", key="admin_login8"):
+                from app.auth import verify_password as _vp8
+                if _vp8(pw8):
+                    st.session_state["admin_ok"] = True
+                    st.rerun()
+                else:
+                    st.error("Contraseña incorrecta.")
+    else:
+        from app.auth import verify_password, set_password, check_requirements, get_admin_info
+
+        info = get_admin_info()
+
+        # ── Info del administrador ────────────────────────────────────────────────
+        st.markdown("### Información del administrador")
+        col_n, col_e = st.columns(2)
+        with col_n:
+            new_name = st.text_input("Nombre", value=info.get("admin_name", "Marcela Piña"), key="adm_name")
+        with col_e:
+            new_email = st.text_input("Correo", value=info.get("admin_email", ""), key="adm_email")
+
+        if info.get("updated_at"):
+            st.caption(f"Última actualización: {info['updated_at'][:19].replace('T', ' ')}")
+
+        if info.get("has_hash"):
+            st.success("Contraseña almacenada como hash seguro (bcrypt).")
+        else:
+            st.warning("Usando ADMIN_PASSWORD de .env / Secrets. Cambia la contraseña aquí para activar almacenamiento seguro.")
+
+        st.divider()
+
+        # ── Cambio de contraseña ──────────────────────────────────────────────────
+        st.markdown("### Cambiar contraseña")
+
+        cur_pw  = st.text_input("Contraseña actual", type="password", key="adm_cur")
+        new_pw  = st.text_input("Nueva contraseña",  type="password", key="adm_new")
+        conf_pw = st.text_input("Confirmar nueva contraseña", type="password", key="adm_conf")
+
+        # Requisitos en tiempo real
+        if new_pw:
+            missing = check_requirements(new_pw)
+            if missing:
+                for req in missing:
+                    st.caption(f"❌ {req}")
+            else:
+                st.caption("✅ La contraseña cumple todos los requisitos.")
+
+        st.caption("Requisitos: mínimo 10 caracteres · mayúscula · minúscula · número · símbolo")
+
+        if st.button("💾 Guardar nueva contraseña", type="primary", key="adm_save"):
+            if not cur_pw:
+                st.error("Ingresa tu contraseña actual.")
+            elif not verify_password(cur_pw):
+                st.error("La contraseña actual es incorrecta.")
+            elif not new_pw:
+                st.error("La nueva contraseña no puede estar vacía.")
+            else:
+                missing = check_requirements(new_pw)
+                if missing:
+                    st.error("La nueva contraseña no cumple los requisitos:\n" + "\n".join(f"• {r}" for r in missing))
+                elif new_pw != conf_pw:
+                    st.error("La confirmación no coincide con la nueva contraseña.")
+                else:
+                    set_password(new_pw, admin_name=new_name.strip(), admin_email=new_email.strip())
+                    st.success("✅ Contraseña actualizada correctamente. La nueva contraseña ya está activa.")
+                    st.info("Nota: en Streamlit Cloud los cambios se pierden al redesplegar. Para cambio permanente en Cloud, actualiza ADMIN_PASSWORD en Settings → Secrets.")
+
+        st.divider()
+
+        # ── Cerrar sesión ─────────────────────────────────────────────────────────
+        st.markdown("### Sesión")
+        if st.button("🔒 Cerrar sesión de administrador", key="adm_logout"):
+            st.session_state["admin_ok"] = False
+            st.rerun()
