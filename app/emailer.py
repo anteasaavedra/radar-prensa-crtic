@@ -46,9 +46,10 @@ def _send(subject: str, html: str, to: list = None):
 
 
 def send_report(html_path: str, fecha: str, vem_total: str, total_menciones: int):
+    from app.email_config import get_recipients
     html = Path(html_path).read_text(encoding="utf-8")
     subject = f"📡 Radar CRTIC – {fecha} | {total_menciones} menciones | VEM {vem_total}"
-    _send(subject, html)
+    _send(subject, html, to=get_recipients())
 
 
 def send_monthly_report(html_path: str, periodo: str, vem_total: str, total_menciones: int):

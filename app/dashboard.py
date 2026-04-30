@@ -136,13 +136,14 @@ k3.metric("Alta relevancia", alta_n)
 st.divider()
 
 # ── Pestañas ───────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📊 Visualizaciones",
     "📈 Comparativo VEM",
     "📋 Tabla de menciones",
     "✏️ Corrección manual",
     "📥 Exportar",
     "⚙️ Configuración de búsquedas",
+    "📧 Reportes por correo",
 ])
 
 # ════════════════════════════════════════════════════════════════
@@ -670,4 +671,160 @@ with tab6:
         with col_logout:
             if st.button("🔒 Cerrar sesión admin"):
                 st.session_state["admin_ok"] = False
+                st.rerun()
+
+
+# ════════════════════════════════════════════════════════════════
+# TAB 7 — Configuración de reportes por correo
+# ════════════════════════════════════════════════════════════════
+_ALL_AREAS = [
+    "Formación", "Comunicaciones", "Proyectos / Emprendimiento",
+    "CRTIC Sur", "Alianzas", "Tecnología / Innovación", "Institucional", "Otro",
+]
+
+with tab7:
+    st.subheader("📧 Configuración de reportes por correo")
+
+    # Reutiliza la misma sesión de autenticación que tab6
+    if not st.session_state.get("admin_ok", False):
+        st.info("Esta sección es solo para administradores. Autentícate en la pestaña '⚙️ Configuración de búsquedas'.")
+        col_pw7, col_btn7 = st.columns([3, 1])
+        with col_pw7:
+            pw7 = st.text_input("Contraseña de administración", type="password", key="admin_pw7")
+        with col_btn7:
+            st.write(""); st.write("")
+            if st.button("Ingresar", key="admin_login7"):
+                from app.config import _get as _cfg_get7
+                admin_pw7 = _cfg_get7("ADMIN_PASSWORD", "")
+                if admin_pw7 and pw7 == admin_pw7:
+                    st.session_state["admin_ok"] = True
+                    st.rerun()
+                elif not admin_pw7:
+                    st.error("ADMIN_PASSWORD no configurado en .env o Secrets.")
+                else:
+                    st.error("Contraseña incorrecta.")
+    else:
+        from app.email_config import load_email_cfg, save_email_cfg
+
+        ecfg = load_email_cfg()
+
+        # ── Estado general ────────────────────────────────────────────────────────
+        st.markdown("### Estado del envío automático")
+        col_en1, col_en2, col_en3 = st.columns(3)
+        with col_en1:
+            e_enabled = st.toggle("Envío activo", value=ecfg.get("enabled", True), key="e_enabled")
+        with col_en2:
+            e_only_new = st.toggle("Solo menciones nuevas", value=ecfg.get("send_only_new_mentions", True), key="e_only_new")
+        with col_en3:
+            e_empty = st.toggle("Enviar aunque no haya menciones", value=ecfg.get("send_empty_report", False), key="e_empty")
+
+        if not e_enabled:
+            st.warning("⚠️ El envío automático está **desactivado**. No se enviarán reportes diarios por correo.")
+
+        st.divider()
+
+        # ── Nivel mínimo de relevancia ────────────────────────────────────────────
+        st.markdown("### Filtros de contenido")
+        rel_opts = ["alta", "media", "baja"]
+        cur_rel = ecfg.get("min_relevance", "media").lower()
+        e_rel = st.selectbox(
+            "Nivel mínimo de relevancia para incluir en el correo",
+            rel_opts,
+            index=rel_opts.index(cur_rel) if cur_rel in rel_opts else 1,
+            key="e_rel",
+        )
+
+        # ── Áreas CRTIC ───────────────────────────────────────────────────────────
+        cur_areas = ecfg.get("included_areas", _ALL_AREAS)
+        e_areas = st.multiselect(
+            "Áreas CRTIC a incluir",
+            options=_ALL_AREAS,
+            default=[a for a in cur_areas if a in _ALL_AREAS],
+            key="e_areas",
+        )
+
+        st.divider()
+
+        # ── Listas editables: helper ──────────────────────────────────────────────
+        def _list_editor(label: str, field: str, cfg_ref: dict, key_prefix: str):
+            """Renderiza una lista editable (add / delete). Modifica cfg_ref en lugar."""
+            items = cfg_ref.get(field, [])
+            st.markdown(f"**{label}** — {len(items)} término(s)")
+            _del = None
+            for i, item in enumerate(items):
+                c1, c2 = st.columns([7, 1])
+                c1.text(item)
+                if c2.button("🗑️", key=f"{key_prefix}_del_{i}"):
+                    _del = item
+            col_inp, col_add = st.columns([5, 1])
+            with col_inp:
+                new_val = st.text_input("", placeholder="Agregar...", key=f"{key_prefix}_new", label_visibility="collapsed")
+            with col_add:
+                add_clicked = st.button("➕", key=f"{key_prefix}_add")
+
+            if _del is not None:
+                cfg_ref[field] = [x for x in items if x != _del]
+                save_email_cfg(cfg_ref)
+                st.rerun()
+            if add_clicked:
+                v = new_val.strip()
+                if not v:
+                    st.warning("El campo no puede estar vacío.")
+                elif v in items:
+                    st.warning(f"'{v}' ya existe.")
+                else:
+                    cfg_ref.setdefault(field, []).append(v)
+                    save_email_cfg(cfg_ref)
+                    st.rerun()
+
+        col_kw1, col_kw2 = st.columns(2)
+        with col_kw1:
+            _list_editor("Keywords que SÍ se envían", "include_keywords", ecfg, "inc_kw")
+        with col_kw2:
+            _list_editor("Keywords que NO se envían", "exclude_keywords", ecfg, "exc_kw")
+
+        st.divider()
+
+        col_med, col_rec = st.columns(2)
+        with col_med:
+            _list_editor("Medios prioritarios (siempre incluidos)", "priority_media", ecfg, "pri_med")
+        with col_rec:
+            _list_editor("Destinatarios del correo", "recipients", ecfg, "recip")
+
+        st.caption("Si 'Destinatarios' está vacío, se usa EMAIL_TO de la configuración del servidor.")
+
+        st.divider()
+
+        # ── Hora de envío ──────────────────────────────────────────────────────────
+        st.markdown("### Hora sugerida de envío")
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            e_time = st.text_input("Hora (HH:MM, formato 24h)", value=ecfg.get("send_time", "09:00"), key="e_time")
+        with col_t2:
+            e_tz = st.text_input("Zona horaria", value=ecfg.get("timezone", "America/Santiago"), key="e_tz")
+        st.caption("La hora es referencial. El cron o GitHub Actions define el horario real de ejecución.")
+
+        st.divider()
+
+        # ── Guardar + Restaurar ────────────────────────────────────────────────────
+        col_save7, col_restore7 = st.columns(2)
+
+        with col_save7:
+            if st.button("💾 Guardar configuración", type="primary", key="save_email_cfg"):
+                ecfg["enabled"]                 = e_enabled
+                ecfg["send_only_new_mentions"]  = e_only_new
+                ecfg["send_empty_report"]       = e_empty
+                ecfg["min_relevance"]           = e_rel
+                ecfg["included_areas"]          = e_areas
+                ecfg["send_time"]               = e_time.strip()
+                ecfg["timezone"]                = e_tz.strip()
+                save_email_cfg(ecfg)
+                st.success("✅ Configuración de correo guardada.")
+                st.rerun()
+
+        with col_restore7:
+            if st.button("↩️ Restaurar por defecto", key="restore_email_cfg"):
+                from app.email_config import _DEFAULTS as _EMAIL_DEFAULTS
+                save_email_cfg(_EMAIL_DEFAULTS.copy())
+                st.success("✅ Configuración restaurada a valores por defecto.")
                 st.rerun()

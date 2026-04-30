@@ -1,0 +1,33 @@
+{
+  "enabled": true,
+  "send_only_new_mentions": true,
+  "send_empty_report": false,
+  "min_relevance": "media",
+  "include_keywords": [
+    "CRTIC",
+    "Centro para la Revolución Tecnológica en Industrias Creativas",
+    "tecnocreatividad",
+    "CRTIC Sur",
+    "LAB CRTIC"
+  ],
+  "exclude_keywords": [],
+  "priority_media": [
+    "latercera.com",
+    "emol.com",
+    "df.cl",
+    "biobiochile.cl",
+    "elmostrador.cl"
+  ],
+  "included_areas": [
+    "Formación",
+    "Comunicaciones",
+    "Proyectos / Emprendimiento",
+    "CRTIC Sur",
+    "Alianzas",
+    "Tecnología / Innovación",
+    "Institucional"
+  ],
+  "recipients": [],
+  "send_time": "09:00",
+  "timezone": "America/Santiago"
+}

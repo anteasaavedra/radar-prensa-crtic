@@ -64,9 +64,12 @@ def _recomendaciones(menciones: list) -> list:
 
 # ── Reporte diario ─────────────────────────────────────────────────────────────
 
-def generate_daily_html(fecha=None) -> str:
+def generate_daily_html(fecha=None, menciones_override=None) -> str:
     fecha = fecha or datetime.now().strftime("%Y-%m-%d")
-    menciones = get_menciones(fecha_desde=fecha, fecha_hasta=fecha, estado="nueva", limit=200)
+    if menciones_override is not None:
+        menciones = menciones_override
+    else:
+        menciones = get_menciones(fecha_desde=fecha, fecha_hasta=fecha, estado="nueva", limit=200)
     vem_total = get_vem_diario(fecha)
     top3 = sorted(menciones, key=lambda m: m.get("vem", 0), reverse=True)[:3]
     negativas = [m for m in menciones if m["sentimiento"] == "Negativo"]

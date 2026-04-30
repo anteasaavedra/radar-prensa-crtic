@@ -76,23 +76,39 @@ def run_daily(no_email, fecha):
                 logger.error("Error enviando alerta negativa: %s", e)
 
     logger.info("Fase 3/4: Generando reporte HTML...")
-    html_path = generate_daily_html(fecha)
+    vem_str = f"$ {int(get_vem_diario(fecha)):,}".replace(",", ".")
 
     if not no_email:
-        logger.info("Fase 4/4: Enviando reporte diario...")
-        vem_str = f"$ {int(get_vem_diario(fecha)):,}".replace(",", ".")
-        try:
-            send_report(html_path, fecha, vem_str, nuevas)
-        except Exception as e:
-            logger.error("No se pudo enviar el reporte: %s", e)
+        from app.email_config import load_email_cfg, filter_menciones_for_email
+        email_cfg = load_email_cfg()
+
+        if not email_cfg.get("enabled", True):
+            logger.info("Fase 4/4: Envío desactivado en Configuración de reportes. Reporte generado sin enviar.")
+            html_path = generate_daily_html(fecha)
+        else:
+            all_day = get_menciones(fecha_desde=fecha, fecha_hasta=fecha, limit=1000)
+            filtered = filter_menciones_for_email(all_day)
+            logger.info("Menciones filtradas para correo: %d de %d", len(filtered), len(all_day))
+
+            if not filtered and not email_cfg.get("send_empty_report", False):
+                logger.info("Fase 4/4: Sin menciones tras filtros y send_empty_report=false. No se envía correo.")
+                html_path = generate_daily_html(fecha)
+            else:
+                html_path = generate_daily_html(fecha, menciones_override=filtered)
+                logger.info("Fase 4/4: Enviando reporte diario (%d menciones)...", len(filtered))
+                try:
+                    send_report(html_path, fecha, vem_str, len(filtered))
+                except Exception as e:
+                    logger.error("No se pudo enviar el reporte: %s", e)
     else:
+        html_path = generate_daily_html(fecha)
         logger.info("Fase 4/4: Envío omitido (--no-email).")
 
     logger.info("=== Ciclo completado. Reporte en: %s ===", html_path)
     click.echo(f"✅  Reporte generado: {html_path}")
     click.echo(f"   Nuevas menciones : {nuevas}")
     click.echo(f"   Menciones negativas nuevas: {len(negativas_nuevas)}")
-    click.echo(f"   VEM del día: $ {int(get_vem_diario(fecha)):,}".replace(",", "."))
+    click.echo(f"   VEM del día: {vem_str}")
 
 
 @cli.command("run-monthly")
