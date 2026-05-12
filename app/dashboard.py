@@ -445,30 +445,76 @@ with tab4:
 # ════════════════════════════════════════════════════════════════
 with tab5:
     st.subheader("Exportar datos")
+
+    # ── Reporte Excel completo (multi-hoja) ───────────────────────────────────
+    st.markdown("### 📊 Reporte Excel completo")
+    st.caption(
+        "Genera un archivo .xlsx con 4 hojas: **Resumen · Menciones · Top VEM · Alertas**. "
+        "Usa los filtros del panel lateral para ajustar el período y las menciones incluidas."
+    )
+
+    if df.empty:
+        st.info("Sin datos para el período y filtros seleccionados. Ajusta las fechas en el panel lateral.")
+    else:
+        from app.excel_export import generate_excel_report
+
+        periodo_str = (
+            f"{str(fecha_desde)} – {str(fecha_hasta)}"
+            if fecha_desde != fecha_hasta
+            else str(fecha_desde)
+        )
+        summary_data = {
+            "periodo":  periodo_str,
+            "generado": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        }
+
+        with st.spinner("Generando Excel..."):
+            excel_bytes = generate_excel_report(df, summary_data)
+
+        nombre_archivo = f"reporte_prensa_crtic_{str(hoy)}.xlsx"
+        st.download_button(
+            label="⬇️ Descargar reporte Excel",
+            data=excel_bytes,
+            file_name=nombre_archivo,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
+            use_container_width=True,
+        )
+        st.caption(f"Archivo: `{nombre_archivo}` · {len(df)} menciones · Período: {periodo_str}")
+
+    st.divider()
+
+    # ── Exportaciones por período (CSV / Excel simple) ────────────────────────
+    st.markdown("### 🗂️ Exportaciones por período")
+    st.caption("Guarda archivos en la carpeta `exports/` del servidor.")
+
     e1, e2, e3 = st.columns(3)
 
     with e1:
         st.markdown("**Reporte diario**")
         f_exp = st.date_input("Fecha", value=hoy, key="exp_d")
-        fmt_d = st.radio("Formato", ["csv","excel"], key="fmt_d")
-        if st.button("Exportar día"):
-            p = export_daily(str(f_exp), fmt_d)
+        fmt_d = st.radio("Formato", ["csv", "excel"], key="fmt_d")
+        if st.button("Guardar archivo", key="btn_exp_d"):
+            with st.spinner("Exportando..."):
+                p = export_daily(str(f_exp), fmt_d)
             st.success(f"Guardado: {p}")
 
     with e2:
         st.markdown("**Reporte mensual**")
-        mes_e  = st.selectbox("Mes",  range(1,13), index=hoy.month-1, key="exp_mes")
+        mes_e  = st.selectbox("Mes",  range(1, 13), index=hoy.month - 1, key="exp_mes")
         anio_e = st.number_input("Año", value=hoy.year, key="exp_anio")
-        fmt_m  = st.radio("Formato", ["csv","excel"], key="fmt_m")
-        if st.button("Exportar mes"):
-            p = export_monthly(int(anio_e), int(mes_e), fmt_m)
+        fmt_m  = st.radio("Formato", ["csv", "excel"], key="fmt_m")
+        if st.button("Guardar archivo", key="btn_exp_m"):
+            with st.spinner("Exportando..."):
+                p = export_monthly(int(anio_e), int(mes_e), fmt_m)
             st.success(f"Guardado: {p}")
 
     with e3:
         st.markdown("**Histórico completo**")
-        fmt_h = st.radio("Formato", ["csv","excel"], key="fmt_h")
-        if st.button("Exportar histórico"):
-            p = export_historico(fmt_h)
+        fmt_h = st.radio("Formato", ["csv", "excel"], key="fmt_h")
+        if st.button("Guardar archivo", key="btn_exp_h"):
+            with st.spinner("Exportando..."):
+                p = export_historico(fmt_h)
             st.success(f"Guardado: {p}")
 
 
