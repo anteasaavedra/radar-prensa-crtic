@@ -463,13 +463,9 @@ with tab5:
             if fecha_desde != fecha_hasta
             else str(fecha_desde)
         )
-        summary_data = {
-            "periodo":  periodo_str,
-            "generado": datetime.now().strftime("%d/%m/%Y %H:%M"),
-        }
 
         with st.spinner("Generando Excel..."):
-            excel_bytes = generate_excel_report(df, summary_data)
+            excel_bytes = generate_excel_report(df)
 
         nombre_archivo = f"reporte_prensa_crtic_{str(hoy)}.xlsx"
         st.download_button(
