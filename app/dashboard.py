@@ -453,30 +453,16 @@ with tab5:
         "Usa los filtros del panel lateral para ajustar el período y las menciones incluidas."
     )
 
-    if df.empty:
-        st.info("Sin datos para el período y filtros seleccionados. Ajusta las fechas en el panel lateral.")
-    else:
-        from app.excel_export import generate_excel_report
+    from app.excel_export import generate_excel_report
 
-        periodo_str = (
-            f"{str(fecha_desde)} – {str(fecha_hasta)}"
-            if fecha_desde != fecha_hasta
-            else str(fecha_desde)
-        )
+    excel_bytes = generate_excel_report(df)
 
-        with st.spinner("Generando Excel..."):
-            excel_bytes = generate_excel_report(df)
-
-        nombre_archivo = f"reporte_prensa_crtic_{str(hoy)}.xlsx"
-        st.download_button(
-            label="⬇️ Descargar reporte Excel",
-            data=excel_bytes,
-            file_name=nombre_archivo,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            type="primary",
-            use_container_width=True,
-        )
-        st.caption(f"Archivo: `{nombre_archivo}` · {len(df)} menciones · Período: {periodo_str}")
+    st.download_button(
+        label="Descargar reporte en Excel",
+        data=excel_bytes,
+        file_name=f"reporte_prensa_crtic_{datetime.now().strftime('%Y-%m-%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
     st.divider()
 
